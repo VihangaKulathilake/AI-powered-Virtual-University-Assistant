@@ -107,36 +107,39 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div className="space-y-1 flex-1">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className={cn(
-                  'group flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors border duration-150',
-                  activeSessionId === session.id
-                    ? 'bg-slate-850 text-slate-100 border-slate-750'
-                    : 'text-slate-450 hover:bg-slate-800/40 hover:text-slate-200 border-transparent'
-                )}
-              >
-                <Link
-                  to="/chat"
-                  onClick={() => {
-                    setActiveSessionId(session.id);
-                    onClose();
-                  }}
-                  className="flex-1 text-left truncate font-medium mr-2"
+            {sessions.map((session) => {
+              const sessionId = session.id || (session as any)._id;
+              return (
+                <div
+                  key={sessionId}
+                  className={cn(
+                    'group flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors border duration-150',
+                    activeSessionId === sessionId
+                      ? 'bg-slate-850 text-slate-100 border-slate-750'
+                      : 'text-slate-450 hover:bg-slate-800/40 hover:text-slate-200 border-transparent'
+                  )}
                 >
-                  {session.title}
-                </Link>
-                <button
-                  onClick={() => deleteSession(session.id)}
-                  type="button"
-                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400 hover:bg-slate-750/50 rounded transition-all duration-150 cursor-pointer"
-                  title="Remove conversation record"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
+                  <Link
+                    to="/chat"
+                    onClick={() => {
+                      setActiveSessionId(sessionId);
+                      onClose();
+                    }}
+                    className="flex-1 text-left truncate font-medium mr-2"
+                  >
+                    {session.title}
+                  </Link>
+                  <button
+                    onClick={() => deleteSession(sessionId)}
+                    type="button"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400 hover:bg-slate-750/50 rounded transition-all duration-150 cursor-pointer"
+                    title="Remove conversation record"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
 

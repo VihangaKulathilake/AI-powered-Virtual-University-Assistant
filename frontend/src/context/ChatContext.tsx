@@ -88,12 +88,29 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const sendMessage = async (content: string) => {
-    if (!content.trim() || !activeSessionId) return;
+    if (!content.trim()) return;
 
+    let sessionId = activeSessionId;
     setTyping(true);
+
     try {
+      // If no active session exists (database empty), initialize one first
+      if (!sessionId) {
+        const title = content.length > 30 ? `${content.substring(0, 30)}...` : content;
+        const newSession = await chatService.createSession(title);
+        sessionId = newSession.id || (newSession as any)._id || null;
+        
+        if (!sessionId) {
+          throw new Error('Failed to create a valid chat session ID');
+        }
+
+        // Update sessions lists and set active ID
+        setSessions((prev) => [newSession, ...prev]);
+        setActiveSessionId(sessionId);
+      }
+
       // 1. Post user message to REST API
-      const userMsg = await chatService.sendMessage(activeSessionId, content);
+      const userMsg = await chatService.sendMessage(sessionId, content);
       
       // 2. Append user message locally for instant UI updates
       setMessages((prev) => [...prev, userMsg]);
@@ -102,14 +119,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Brief delay to allow database processing
       setTimeout(async () => {
         try {
-          const updatedMessages = await chatService.getMessages(activeSessionId);
+          const updatedMessages = await chatService.getMessages(sessionId!);
           setMessages(updatedMessages);
         } catch (err) {
           console.error('Failed to refresh messages after user post:', err);
         } finally {
           setTyping(false);
         }
-      }, 1000);
+      }, 1200);
       
     } catch (err) {
       console.error('Failed to send query to REST backend:', err);

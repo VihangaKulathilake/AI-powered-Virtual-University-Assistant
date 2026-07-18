@@ -7,7 +7,7 @@ class AIService {
       console.warn('[AI Service] WARNING: GEMINI_API_KEY is not set. AI responses will fail.');
     }
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    this.modelName = 'gemini-1.5-flash';
+    this.modelName = 'gemini-3.5-flash';
   }
 
   /**

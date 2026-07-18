@@ -3,6 +3,7 @@ import { useChat } from '../../hooks/useChat';
 import ChatWindow from '../../components/chat/ChatWindow';
 import ChatInput from '../../components/chat/ChatInput';
 import UploadPanel from '../../components/upload/UploadPanel';
+import AiAvatar from '../../components/chat/AiAvatar';
 import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '../../utils/helpers';
 
@@ -26,9 +27,15 @@ export const Chat: React.FC = () => {
       <div className="flex-1 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm h-full">
         {/* Chat Window Header */}
         <div className="px-5 py-3.5 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse animate-duration-1000" />
-            <span className="text-xs font-semibold text-slate-400 select-none">AI Agent Active</span>
+          <div className="flex items-center gap-3">
+            <AiAvatar size="sm" isTyping={typing} />
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-slate-200">UniAssist AI</span>
+              <span className="text-[10px] text-slate-550 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Active
+              </span>
+            </div>
           </div>
           
           <button
