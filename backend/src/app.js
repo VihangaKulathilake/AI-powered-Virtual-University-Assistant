@@ -1,39 +1,58 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+
 const chatRoutes = require('./routes/chatRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 
-// Standard Middlewares
-app.use(cors());
+// Security HTTP Headers
+app.use(helmet({
+  crossOriginResourcePolicy: false, // Allows static uploads access in development
+}));
+
+// Cross Origin Resource Sharing (CORS)
+app.use(cors({
+  origin: process.env.CLIENT_ORIGIN || '*',
+  credentials: true,
+}));
+
+// HTTP Request Logger
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+// JSON Body Parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Log requests stub
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
+// Serve Uploads folder as static files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Health Check API
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'System Health Check OK',
+    timestamp: new Date(),
+  });
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date() });
-});
-
-// Routing entry points
+// REST API Route mappings
 app.use('/api/chats', chatRoutes);
-app.use('/api/documents', uploadRoutes);
+// Note: Mount routes at /api/knowledge for upload matching REST specs
+app.use('/api/knowledge', uploadRoutes);
 
-// Catch-all route for unmatched paths
+// Catch-all route for unmatched paths (404)
 app.use('*', (req, res, next) => {
   const error = new Error(`Cannot find ${req.method} ${req.originalUrl} on this server`);
   error.statusCode = 404;
   next(error);
 });
 
-// Global Error Handler middleware
+// Centralized Error handling middleware
 app.use(errorHandler);
 
 module.exports = app;
