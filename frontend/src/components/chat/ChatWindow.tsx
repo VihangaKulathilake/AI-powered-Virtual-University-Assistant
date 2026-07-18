@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { type Message } from '../../types';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
+import AiAvatar from './AiAvatar';
 import EmptyState from '../common/EmptyState';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { MessageSquare, AlertCircle, Sparkles, HelpCircle } from 'lucide-react';
@@ -100,10 +101,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         <MessageBubble key={message.id} message={message} />
       ))}
 
-      {/* Rendering bot response indicators */}
+      {/* Animated avatar typing indicator */}
       {typing && (
-        <div className="flex justify-start my-4">
-          <TypingIndicator />
+        <div className="flex items-end gap-3 my-4 px-1">
+          <AiAvatar size="sm" isTyping={true} />
+          <div className="flex items-center gap-2 px-4 py-3 bg-slate-900 border border-slate-800 rounded-2xl rounded-bl-sm shadow-sm">
+            <TypingIndicator />
+            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest ml-1">UniAssist is thinking...</span>
+          </div>
         </div>
       )}
 

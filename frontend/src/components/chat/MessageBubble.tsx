@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { type Message } from '../../types';
-import { FileText, GraduationCap, Copy, Check } from 'lucide-react';
+import { FileText, Copy, Check } from 'lucide-react';
 import { formatTime, cn, parseMarkdown } from '../../utils/helpers';
+import AiAvatar from './AiAvatar';
 
 interface MessageBubbleProps {
   message: Message;
@@ -41,9 +42,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             JD
           </div>
         ) : (
-          <div className="w-9 h-9 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-xs font-bold text-indigo-400 shadow-md select-none">
-            <GraduationCap className="w-5 h-5 text-indigo-400 glow-glow" />
-          </div>
+          <AiAvatar size="sm" isTyping={false} />
         )}
       </div>
 
