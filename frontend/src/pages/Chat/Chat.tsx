@@ -8,14 +8,14 @@ import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '../../utils/helpers';
 
 export const Chat: React.FC = () => {
-  const { messages, typing, loading, sendMessage } = useChat();
+  const { messages, typing, loading, sendMessage, uploadFile } = useChat();
   const [showUploads, setShowUploads] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, image?: { data: string; mimeType: string }) => {
     setError(null);
     try {
-      await sendMessage(content);
+      await sendMessage(content, image);
     } catch (err: any) {
       setError(err?.message || 'An error occurred while sending your request to the university assistant. Please check configurations.');
     }
@@ -68,7 +68,10 @@ export const Chat: React.FC = () => {
         {/* Send Inputs */}
         <ChatInput
           onSendMessage={handleSendMessage}
-          onAttachFile={() => setShowUploads(true)}
+          onAttachFile={(file) => {
+            uploadFile(file);
+            setShowUploads(true);
+          }}
           disabled={typing || loading}
         />
       </div>

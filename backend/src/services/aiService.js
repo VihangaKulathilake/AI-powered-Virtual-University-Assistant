@@ -32,17 +32,19 @@ class AIService {
   }
 
   /**
-   * Generate an AI response using Gemini 1.5 Flash with:
+   * Generate an AI response using Gemini with:
    * - Injected system prompt (university persona + guidelines)
    * - RAG knowledge context from uploaded documents
    * - Full multi-turn conversation history
+   * - Optional multimodal image attachment
    *
    * @param {string} userMessage The latest user query
    * @param {Array<object>} chatHistory Previous messages from MongoDB
    * @param {string} knowledgeContext Formatted context from KnowledgeRetrievalService
+   * @param {object} image Optional image attachment { data: string, mimeType: string }
    * @returns {Promise<string>} AI-generated response text
    */
-  async generateResponse(userMessage, chatHistory = [], knowledgeContext = '') {
+  async generateResponse(userMessage, chatHistory = [], knowledgeContext = '', image = null) {
     try {
       // Build the system prompt with university persona + knowledge context
       const systemPrompt = systemPromptService.buildSystemPrompt(knowledgeContext);
@@ -65,8 +67,24 @@ class AIService {
       // Start a chat session with the historical context
       const chat = model.startChat({ history });
 
-      // Send the current user message and await the response
-      const result = await chat.sendMessage(userMessage);
+      // Construct request parts (supporting multimodality)
+      let requestPayload;
+      if (image && image.data && image.mimeType) {
+        requestPayload = [
+          { text: userMessage },
+          {
+            inlineData: {
+              data: image.data,
+              mimeType: image.mimeType,
+            },
+          },
+        ];
+      } else {
+        requestPayload = userMessage;
+      }
+
+      // Send the current user message (multimodal or text) and await the response
+      const result = await chat.sendMessage(requestPayload);
       const response = result.response;
       const text = response.text();
 

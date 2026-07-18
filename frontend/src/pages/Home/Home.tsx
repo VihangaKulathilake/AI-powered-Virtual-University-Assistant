@@ -35,7 +35,7 @@ export const Home: React.FC = () => {
     },
     {
       title: 'Secure & Customizable Context',
-      description: 'Tune temperature, chunk sizes, and providers in the settings. Your academic materials remain indexed securely inside local mock vector stores.',
+      description: 'Tune temperature, chunk sizes, and providers in the settings. Your academic materials remain indexed securely inside Pinecone database vector indexes.',
       icon: ShieldCheck,
       color: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
     },
@@ -70,7 +70,7 @@ export const Home: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
-          <Link to="/upload" className="w-full sm:w-auto">
+          <Link to="/chat" className="w-full sm:w-auto">
             <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 border-slate-800 text-slate-300 hover:bg-slate-900">
               <Zap className="w-4 h-4 text-sky-400" />
               <span>Explore Knowledge Base</span>

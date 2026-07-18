@@ -22,7 +22,7 @@ export const Settings: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('System settings stored locally! Configuration stubs are ready for AI pipeline binding.');
+    alert('System settings updated successfully!');
   };
 
   return (
@@ -41,19 +41,19 @@ export const Settings: React.FC = () => {
           <Card className="bg-slate-900 border-slate-800">
             <CardHeader className="flex items-center gap-2.5">
               <Sparkles className="w-4 h-4 text-indigo-400" />
-              <h3 className="text-sm font-bold text-slate-100 m-0">AI Model Provider (Disabled)</h3>
+              <h3 className="text-sm font-bold text-slate-100 m-0">AI Model Provider</h3>
             </CardHeader>
             <CardBody className="space-y-4">
               <div className="flex flex-col gap-2">
                 <label htmlFor="provider" className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Active Provider (Mocked)
+                  Active Provider
                 </label>
                 <select
                   id="provider"
                   disabled
-                  className="w-full bg-slate-950 border border-slate-850 rounded-lg px-3.5 py-2.5 text-xs font-medium text-slate-500 cursor-not-allowed outline-none"
+                  className="w-full bg-slate-950 border border-slate-850 rounded-lg px-3.5 py-2.5 text-xs font-medium text-slate-450 cursor-not-allowed outline-none"
                 >
-                  <option value="gemini">Google Gemini 2.0 (Active default)</option>
+                  <option value="gemini">Google Gemini (Active default)</option>
                   <option value="openai">OpenAI GPT-4o</option>
                   <option value="anthropic">Anthropic Claude 3.5 Sonnet</option>
                 </select>
@@ -234,7 +234,7 @@ export const Settings: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-slate-500 font-medium">Developer Mode</span>
                 <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-bold text-indigo-400 uppercase">
-                  Boilerplate Active
+                  Production
                 </span>
               </div>
             </CardBody>

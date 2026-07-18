@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useChat } from '../../hooks/useChat';
+import { useAuth } from '../../context/AuthContext';
 import { 
   MessageSquare, 
   Home, 
@@ -9,7 +10,6 @@ import {
   Plus, 
   Trash2, 
   GraduationCap, 
-  UploadCloud,
   X 
 } from 'lucide-react';
 import { cn } from '../../utils/helpers';
@@ -21,14 +21,19 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { sessions, activeSessionId, setActiveSessionId, createNewSession, deleteSession } = useChat();
+  const { user } = useAuth();
 
   const navigation = [
     { name: 'Home Overview', to: '/', icon: Home },
     { name: 'AI Chat Assistant', to: '/chat', icon: MessageSquare },
     { name: 'Dashboard Analytics', to: '/dashboard', icon: LayoutDashboard },
-    { name: 'Upload Knowledge', to: '/upload', icon: UploadCloud },
     { name: 'System Settings', to: '/settings', icon: Settings },
   ];
+
+  // Build initials dynamically
+  const initials = user?.name
+    ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'U';
 
   return (
     <>
@@ -144,20 +149,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* User Identity Info status */}
-        <div className="p-4 border-t border-slate-850 bg-slate-900/50 select-none">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-shrink-0">
-              <div className="w-9 h-9 rounded-full bg-indigo-650 flex items-center justify-center font-bold text-slate-100 text-sm border border-indigo-500/20">
-                JD
+        {user && (
+          <div className="p-4 border-t border-slate-855 bg-slate-900/50 select-none">
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0">
+                <div className="w-9 h-9 rounded-full bg-indigo-650 flex items-center justify-center font-bold text-slate-100 text-sm border border-indigo-500/20">
+                  {initials}
+                </div>
+                <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
               </div>
-              <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-200 truncate">John Doe</p>
-              <p className="text-xs text-slate-550 truncate">john.doe@university.edu</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-slate-250 truncate">{user.name}</p>
+                <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">{user.email}</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   );

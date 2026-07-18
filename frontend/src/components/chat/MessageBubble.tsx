@@ -3,12 +3,14 @@ import { type Message } from '../../types';
 import { FileText, Copy, Check, Volume2, VolumeX } from 'lucide-react';
 import { formatTime, cn, parseMarkdown } from '../../utils/helpers';
 import AiAvatar from './AiAvatar';
+import { useAuth } from '../../context/AuthContext';
 
 interface MessageBubbleProps {
   message: Message;
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const isUser = message.sender === 'user' || message.role === 'user';
@@ -25,7 +27,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   const handleSpeak = () => {
     if (!('speechSynthesis' in window)) {
-      alert('Text-to-Speech is not supported in this browser.');
+      alert('Text-to-speech is not supported in your browser.');
       return;
     }
 
@@ -33,10 +35,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     } else {
-      // Filter out Markdown syntax symbols for a clean speech flow
+      // Clean raw markdown elements for clear vocal pronunciation
       const cleanText = message.content
-        .replace(/[#*`_~[\]()]/g, '')
-        .replace(/[-\n\r]/g, ' ');
+        .replace(/[*#`_\-]/g, '') // remove markdown symbols
+        .replace(/\[Source \d+:.*?\]/gi, '') // remove source references
+        .trim();
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
       
@@ -80,13 +83,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     );
   }
 
+  // Build user initials dynamically
+  const initials = user?.name
+    ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'U';
+
   return (
     <div className={cn('flex gap-4 my-6 group', isUser ? 'flex-row-reverse' : 'flex-row')}>
       {/* Sender Avatar */}
       <div className="flex-shrink-0 sticky top-4 self-start">
         {isUser ? (
-          <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-md select-none border border-indigo-500/30">
-            JD
+          <div className="w-9 h-9 rounded-full bg-indigo-650 flex items-center justify-center text-xs font-bold text-white shadow-md select-none border border-indigo-500/30">
+            {initials}
           </div>
         ) : (
           <AiAvatar size="sm" isTyping={false} />
@@ -103,6 +111,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               : 'bg-slate-900 border-slate-800 text-slate-200 rounded-tl-none'
           )}
         >
+          {/* Render Inline Image Attachment */}
+          {message.image && message.image.data && (
+            <div className="mb-3 max-w-sm rounded-xl overflow-hidden border border-slate-800 shadow-md">
+              <img
+                src={`data:${message.image.mimeType || 'image/png'};base64,${message.image.data}`}
+                alt="Attached Resource"
+                className="max-h-60 w-auto object-contain rounded-lg"
+              />
+            </div>
+          )}
+
           {/* Render Markdown parsed tags */}
           <div className="space-y-1">
             {parseMarkdown(message.content)}
@@ -138,39 +157,27 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             {formatTime(message.timestamp || message.createdAt || '')}
           </span>
           {!isSystem && (
-            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-              {/* Copy Button */}
+            <div className="flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+              {/* Copy Message Action */}
               <button
                 onClick={handleCopyMessage}
-                type="button"
-                className="text-slate-500 hover:text-slate-350 transition-colors p-1 rounded cursor-pointer"
-                title="Copy message content"
+                className="p-1 text-slate-500 hover:text-slate-300 rounded transition-colors cursor-pointer"
+                title="Copy message text"
               >
-                {copied ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
 
-              {/* Speak Button (Dr. Amelia voice output) */}
+              {/* Narrate Message Action (TTS) - Assist */}
               {!isUser && (
                 <button
                   onClick={handleSpeak}
-                  type="button"
                   className={cn(
-                    "transition-colors p-1 rounded cursor-pointer",
-                    isSpeaking 
-                      ? "text-indigo-400 hover:text-indigo-300" 
-                      : "text-slate-500 hover:text-slate-350"
+                    "p-1 rounded transition-colors cursor-pointer",
+                    isSpeaking ? "text-indigo-400 bg-indigo-500/10 hover:text-indigo-300" : "text-slate-500 hover:text-slate-300"
                   )}
-                  title={isSpeaking ? "Stop reading" : "Read aloud (Dr. Amelia)"}
+                  title={isSpeaking ? "Mute narration" : "Speak response"}
                 >
-                  {isSpeaking ? (
-                    <VolumeX className="w-3.5 h-3.5 animate-pulse" />
-                  ) : (
-                    <Volume2 className="w-3.5 h-3.5" />
-                  )}
+                  {isSpeaking ? <VolumeX className="w-3.5 h-3.5 animate-pulse" /> : <Volume2 className="w-3.5 h-3.5" />}
                 </button>
               )}
             </div>

@@ -11,7 +11,7 @@ interface ChatContextType {
   documents: UploadedDocument[];
   setActiveSessionId: (id: string | null) => void;
   createNewSession: (title?: string) => Promise<void>;
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, image?: { data: string; mimeType: string }) => Promise<void>;
   uploadFile: (file: File) => Promise<void>;
   deleteSession: (id: string) => void;
   deleteDocument: (id: string) => void;
@@ -87,8 +87,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const sendMessage = async (content: string) => {
-    if (!content.trim()) return;
+  const sendMessage = async (content: string, image?: { data: string; mimeType: string }) => {
+    if (!content.trim() && !image) return;
 
     let sessionId = activeSessionId;
     setTyping(true);
@@ -96,7 +96,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       // If no active session exists (database empty), initialize one first
       if (!sessionId) {
-        const title = content.length > 30 ? `${content.substring(0, 30)}...` : content;
+        const title = content.length > 30 ? `${content.substring(0, 30)}...` : content || 'Visual Query';
         const newSession = await chatService.createSession(title);
         sessionId = newSession.id || (newSession as any)._id || null;
         
@@ -109,8 +109,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setActiveSessionId(sessionId);
       }
 
-      // 1. Post user message to REST API
-      const userMsg = await chatService.sendMessage(sessionId, content);
+      // 1. Post user message to REST API (including visual image if present)
+      const userMsg = await chatService.sendMessage(sessionId, content, image);
       
       // 2. Append user message locally for instant UI updates
       setMessages((prev) => [...prev, userMsg]);

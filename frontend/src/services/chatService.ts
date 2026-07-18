@@ -38,8 +38,8 @@ export const chatService = {
   /**
    * Send a query: save user message, trigger auto assistant response stubs
    */
-  async sendMessage(sessionId: string, content: string): Promise<Message> {
-    const response = await api.post<ApiResponse<Message>>(`/chats/${sessionId}/messages`, { content });
+  async sendMessage(sessionId: string, content: string, image?: { data: string; mimeType: string }): Promise<Message> {
+    const response = await api.post<ApiResponse<Message>>(`/chats/${sessionId}/messages`, { content, image });
     return response.data.data;
   },
 

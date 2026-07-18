@@ -25,6 +25,10 @@ export interface Message {
   timestamp?: string;
   createdAt?: string;
   attachments?: Attachment[];
+  image?: {
+    data: string;
+    mimeType: string;
+  };
 }
 
 export interface ChatSession {

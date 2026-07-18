@@ -18,6 +18,14 @@ const MessageSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Message content cannot be empty'],
   },
+  image: {
+    data: {
+      type: String, // Base64 data string
+    },
+    mimeType: {
+      type: String, // e.g., "image/png"
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now,

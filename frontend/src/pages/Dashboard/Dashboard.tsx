@@ -27,7 +27,11 @@ export const Dashboard: React.FC = () => {
   };
 
   // Calculate sum of messages counts
-  const totalAIResponses = sessions.reduce((acc, curr) => acc + Math.floor((curr.messagesCount || 0) / 2), 0) + 12;
+  const totalAIResponses = sessions.reduce((acc, curr) => acc + Math.floor((curr.messagesCount || 0) / 2), 0);
+
+  // Estimate total text chunks based on total uploaded bytes
+  const totalSize = documents.reduce((acc, curr) => acc + (curr.size || curr.fileSize || 0), 0);
+  const totalTextChunks = totalSize > 0 ? Math.max(1, Math.floor(totalSize / 400)) : 0;
 
   const metrics = [
     {
@@ -75,7 +79,7 @@ export const Dashboard: React.FC = () => {
             <Plus className="w-4 h-4" />
             <span>New Session</span>
           </Button>
-          <Link to="/upload">
+          <Link to="/chat">
             <Button variant="outline" size="sm" className="gap-1.5 border-slate-850 text-slate-300 hover:bg-slate-800">
               <Upload className="w-4 h-4" />
               <span>Upload Doc</span>
@@ -118,7 +122,7 @@ export const Dashboard: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-slate-850 pb-2">
                 <span className="text-xs text-slate-450">Total Text Chunks</span>
-                <span className="text-sm font-semibold text-slate-200 font-mono">1,480 chunks</span>
+                <span className="text-sm font-semibold text-slate-200 font-mono">{totalTextChunks.toLocaleString()} chunks</span>
               </div>
               <div className="flex items-center justify-between border-b border-slate-850 pb-2">
                 <span className="text-xs text-slate-455">Knowledge Index Size</span>

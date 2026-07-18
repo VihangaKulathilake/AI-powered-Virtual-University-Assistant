@@ -22,7 +22,7 @@ class MessageService {
   /**
    * Save a user message, generate a real AI response, and persist both to MongoDB
    * @param {string} chatId Target chat session ID
-   * @param {object} messageData Object containing { content }
+   * @param {object} messageData Object containing { content, image }
    * @param {string} userId Owner student user ID
    * @returns {Promise<object>} The saved user message document
    */
@@ -35,11 +35,12 @@ class MessageService {
       throw error;
     }
 
-    // Step 1: Save the user message to MongoDB
+    // Step 1: Save the user message to MongoDB (including optional image)
     const userMsg = await messageRepository.create({
       chatId,
       role: 'user',
       content: messageData.content,
+      image: messageData.image || null,
     });
 
     // Step 2: Load the full conversation history for multi-turn context
@@ -55,11 +56,12 @@ class MessageService {
       userId
     );
 
-    // Step 4: Generate a real AI response using Gemini with context
+    // Step 4: Generate a real AI response using Gemini with context and optional image
     const aiResponseText = await aiService.generateResponse(
       messageData.content,
       previousMessages,
-      knowledgeContext
+      knowledgeContext,
+      messageData.image
     );
 
     // Step 5: Save the AI-generated assistant reply to MongoDB
