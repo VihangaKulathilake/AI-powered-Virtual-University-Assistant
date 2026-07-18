@@ -1,40 +1,13 @@
 const mongoose = require('mongoose');
 
-const MessageSchema = new mongoose.Schema({
-  sender: {
-    type: String,
-    enum: ['user', 'assistant', 'system'],
-    required: true,
-  },
-  content: {
-    type: String,
-    required: true,
-  },
-  timestamp: {
-    type: Date,
-    default: Date.now,
-  },
-  attachments: [{
-    name: String,
-    size: Number,
-    fileType: String,
-    url: String,
-  }],
-});
-
-const ChatSessionSchema = new mongoose.Schema({
-  userId: {
-    type: String,
-    required: true,
-  },
+const ChatSchema = new mongoose.Schema({
   title: {
     type: String,
-    default: 'New Chat Session',
-  },
-  messages: [MessageSchema],
+    required: [true, 'Chat title is required'],
+    trim: true,
+  }
 }, {
-  timestamps: true,
+  timestamps: true, // Auto adds createdAt and updatedAt
 });
 
-module.exports = mongoose.model('ChatSession', ChatSessionSchema);
-module.exports.MessageSchema = MessageSchema;
+module.exports = mongoose.model('Chat', ChatSchema);
