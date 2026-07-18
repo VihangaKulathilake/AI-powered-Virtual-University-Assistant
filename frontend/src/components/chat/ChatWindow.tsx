@@ -3,9 +3,8 @@ import { type Message } from '../../types';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import AiAvatar from './AiAvatar';
-import EmptyState from '../common/EmptyState';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { MessageSquare, AlertCircle, Sparkles, HelpCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 interface ChatWindowProps {
   messages: Message[];
@@ -50,35 +49,50 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 h-full overflow-y-auto scrollbar-thin">
-        <EmptyState
-          title="Virtual University Assistant"
-          description="Ask me questions about your course materials, syllabi, coding labs, or upload study slides for AI semantic indexing."
-          icon={<MessageSquare className="w-6 h-6 text-indigo-400" />}
-          className="my-0 border-slate-800 bg-slate-900/20"
-        />
-
-        {onQuickQuery && (
-          <div className="mt-8 max-w-xl w-full space-y-3.5 px-4 select-none">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <span>Suggested Academic Prompts</span>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-2.5">
-              {samplePrompts.map((prompt, i) => (
-                <button
-                  key={i}
-                  onClick={() => onQuickQuery(prompt)}
-                  type="button"
-                  className="flex items-start gap-2.5 px-4 py-3 text-left text-xs font-medium text-slate-300 hover:text-slate-100 bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700/80 rounded-xl transition-all duration-150 group cursor-pointer shadow-sm"
-                >
-                  <HelpCircle className="w-4 h-4 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0 mt-0.5" />
-                  <span>{prompt}</span>
-                </button>
-              ))}
-            </div>
+        <div className="max-w-2xl w-full flex flex-col md:flex-row items-start gap-6 px-4 py-6 md:py-12">
+          {/* Dr. Amelia Lecturer Avatar */}
+          <div className="flex-shrink-0 mx-auto md:mx-0">
+            <AiAvatar size="lg" isTyping={false} className="shadow-lg border-2 border-indigo-500/20 rounded-full" />
           </div>
-        )}
+
+          {/* Speech Bubble Container */}
+          <div className="flex-1 space-y-4 w-full">
+            {/* The greeting bubble */}
+            <div className="relative p-5 bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-none text-slate-200 text-sm shadow-md leading-relaxed">
+              {/* Little speech bubble left arrow decoration on medium screens */}
+              <div className="hidden md:block absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-slate-900 border-l-[10px] border-l-transparent" />
+              <div className="hidden md:block absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-slate-800 border-l-[10px] border-l-transparent -z-10" />
+
+              <p className="font-bold text-indigo-400 mb-1 text-xs uppercase tracking-wider">Dr. Amelia</p>
+              <p className="text-slate-300">
+                Hello! I am Dr. Amelia, your senior Software Engineering lecturer. Welcome to your virtual learning assistant. What topic or course materials would you like to study today?
+              </p>
+            </div>
+
+            {/* Clickable prompt actions */}
+            {onQuickQuery && (
+              <div className="space-y-2.5">
+                <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">
+                  Choose a topic to begin learning:
+                </span>
+                
+                <div className="flex flex-col gap-2">
+                  {samplePrompts.map((prompt, i) => (
+                    <button
+                      key={i}
+                      onClick={() => onQuickQuery(prompt)}
+                      type="button"
+                      className="w-full flex items-center justify-between px-5 py-3.5 text-left text-xs font-semibold text-slate-350 hover:text-slate-100 bg-slate-900 hover:bg-slate-850 border border-slate-800/80 hover:border-slate-750 rounded-xl transition-all duration-150 group cursor-pointer shadow-sm"
+                    >
+                      <span className="truncate pr-4">{prompt}</span>
+                      <span className="text-indigo-400 group-hover:text-indigo-300 group-hover:translate-x-0.5 transition-transform font-bold text-[14px]">→</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -98,7 +112,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
       {/* Render bubble rows */}
       {messages.map((message) => (
-        <MessageBubble key={message.id} message={message} />
+        <MessageBubble key={message.id || message._id} message={message} />
       ))}
 
       {/* Animated avatar typing indicator */}

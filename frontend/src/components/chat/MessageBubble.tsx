@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { type Message } from '../../types';
-import { FileText, Copy, Check } from 'lucide-react';
+import { FileText, Copy, Check, Volume2, VolumeX } from 'lucide-react';
 import { formatTime, cn, parseMarkdown } from '../../utils/helpers';
 import AiAvatar from './AiAvatar';
 
@@ -10,8 +10,55 @@ interface MessageBubbleProps {
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const [copied, setCopied] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const isUser = message.sender === 'user' || message.role === 'user';
   const isSystem = message.sender === 'system' || message.role === 'system';
+
+  // Cleanup speech when component unmounts
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handleSpeak = () => {
+    if (!('speechSynthesis' in window)) {
+      alert('Text-to-Speech is not supported in this browser.');
+      return;
+    }
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      // Filter out Markdown syntax symbols for a clean speech flow
+      const cleanText = message.content
+        .replace(/[#*`_~[\]()]/g, '')
+        .replace(/[-\n\r]/g, ' ');
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      
+      // Auto-assign a natural-sounding English voice matching Dr. Amelia
+      const voices = window.speechSynthesis.getVoices();
+      const preferredVoice = voices.find(
+        v => v.name.toLowerCase().includes('google us english') ||
+             v.name.toLowerCase().includes('female') ||
+             v.name.toLowerCase().includes('zira') ||
+             v.name.toLowerCase().includes('natural')
+      );
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+
+      setIsSpeaking(true);
+      window.speechSynthesis.speak(utterance);
+    }
+  };
 
   const handleCopyMessage = async () => {
     try {
@@ -36,7 +83,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   return (
     <div className={cn('flex gap-4 my-6 group', isUser ? 'flex-row-reverse' : 'flex-row')}>
       {/* Sender Avatar */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 sticky top-4 self-start">
         {isUser ? (
           <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-md select-none border border-indigo-500/30">
             JD
@@ -91,18 +138,42 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             {formatTime(message.timestamp || message.createdAt || '')}
           </span>
           {!isSystem && (
-            <button
-              onClick={handleCopyMessage}
-              type="button"
-              className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
-              title="Copy message content"
-            >
-              {copied ? (
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-              ) : (
-                <Copy className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+              {/* Copy Button */}
+              <button
+                onClick={handleCopyMessage}
+                type="button"
+                className="text-slate-500 hover:text-slate-350 transition-colors p-1 rounded cursor-pointer"
+                title="Copy message content"
+              >
+                {copied ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+              </button>
+
+              {/* Speak Button (Dr. Amelia voice output) */}
+              {!isUser && (
+                <button
+                  onClick={handleSpeak}
+                  type="button"
+                  className={cn(
+                    "transition-colors p-1 rounded cursor-pointer",
+                    isSpeaking 
+                      ? "text-indigo-400 hover:text-indigo-300" 
+                      : "text-slate-500 hover:text-slate-350"
+                  )}
+                  title={isSpeaking ? "Stop reading" : "Read aloud (Dr. Amelia)"}
+                >
+                  {isSpeaking ? (
+                    <VolumeX className="w-3.5 h-3.5 animate-pulse" />
+                  ) : (
+                    <Volume2 className="w-3.5 h-3.5" />
+                  )}
+                </button>
               )}
-            </button>
+            </div>
           )}
         </div>
       </div>
