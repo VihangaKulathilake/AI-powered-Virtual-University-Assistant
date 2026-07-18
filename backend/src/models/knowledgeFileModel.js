@@ -21,8 +21,15 @@ const KnowledgeFileSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['uploaded', 'processing', 'completed', 'failed'],
-    default: 'uploaded',
+    enum: ['UPLOADED', 'PROCESSING', 'READY', 'FAILED'],
+    default: 'UPLOADED',
+  },
+  extractedTextLength: {
+    type: Number,
+    default: 0,
+  },
+  processedAt: {
+    type: Date,
   },
   uploadDate: {
     type: Date,
