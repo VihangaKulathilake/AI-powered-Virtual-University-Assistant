@@ -5,6 +5,7 @@ const chunkRepository = require('../repositories/ChunkRepository');
 const documentParserService = require('./documentParserService');
 const textCleaningService = require('./textCleaningService');
 const textChunkingService = require('./textChunkingService');
+const pineconeService = require('./pineconeService');
 
 class KnowledgeService {
   /**
@@ -56,7 +57,7 @@ class KnowledgeService {
       // Step 5: Split text into chunks
       const chunks = textChunkingService.createChunks(cleanText);
 
-      // Step 6: Save chunks to database if any exist
+      // Step 6: Save chunks to database and upload vectors to Pinecone
       if (chunks.length > 0) {
         const chunkDocuments = chunks.map(chunk => ({
           fileId: fileId,
@@ -64,6 +65,9 @@ class KnowledgeService {
           content: chunk.content,
         }));
         await chunkRepository.createManyChunks(chunkDocuments);
+
+        // Upload embedding vectors to Pinecone
+        await pineconeService.upsertDocumentChunks(chunks, fileId, fileData.originalName);
       }
 
       // Step 7: Update status to READY with length and processedAt timestamp
@@ -108,7 +112,10 @@ class KnowledgeService {
     // 1. DeleteRelated chunks from database
     await chunkRepository.deleteByFileId(fileId);
 
-    // 2. Try unlinking local physical file from uploads folder
+    // 2. Delete corresponding vector embeddings from Pinecone
+    await pineconeService.deleteFileVectors(fileId);
+
+    // 3. Try unlinking local physical file from uploads folder
     try {
       const filePath = path.join(__dirname, '..', 'uploads', file.storedName);
       await fs.unlink(filePath);
@@ -116,7 +123,7 @@ class KnowledgeService {
       console.error(`[KnowledgeService] Local disk file delete failure for ${file.storedName}: ${err.message}`);
     }
 
-    // 3. Delete knowledge file metadata record from database
+    // 4. Delete knowledge file metadata record from database
     return knowledgeRepository.delete(fileId);
   }
 
