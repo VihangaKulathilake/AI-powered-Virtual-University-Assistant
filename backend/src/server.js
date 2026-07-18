@@ -11,6 +11,7 @@ process.on('uncaughtException', (err) => {
 });
 
 // Boot database connection and launch listener
+// Dev server reload: gemini-2.5-flash setup completed
 const startServer = async () => {
   try {
     await connectDB();

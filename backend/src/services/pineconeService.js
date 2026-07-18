@@ -93,9 +93,10 @@ class PineconeService {
    * @param {string} query User query string
    * @param {number} limit Maximum matches to return (default 5)
    * @param {string} userId Owner student's user ID for semantic search scoping
+   * @param {string} fileId Optional specific document ID to isolate search focus
    * @returns {Promise<Array<{text: string, score: number, fileName: string}>>} Array of matched chunks
    */
-  async querySemanticMatches(query, limit = 5, userId = null) {
+  async querySemanticMatches(query, limit = 5, userId = null, fileId = null) {
     if (!query || !query.trim()) return [];
 
     this._ensureInit();
@@ -104,17 +105,23 @@ class PineconeService {
       // 1. Convert user search query to vector embedding
       const queryEmbedding = await embeddingService.generateEmbedding(query);
 
-      // 2. Build query parameters with metadata filtering by userId
+      // 2. Build query parameters with metadata filtering by userId and fileId
       const queryOptions = {
         vector: queryEmbedding,
         topK: limit,
         includeMetadata: true,
       };
 
+      const filter = {};
       if (userId) {
-        queryOptions.filter = {
-          userId: { $eq: userId.toString() },
-        };
+        filter.userId = { $eq: userId.toString() };
+      }
+      if (fileId) {
+        filter.fileId = { $eq: fileId.toString() };
+      }
+
+      if (Object.keys(filter).length > 0) {
+        queryOptions.filter = filter;
       }
 
       // 3. Query Pinecone

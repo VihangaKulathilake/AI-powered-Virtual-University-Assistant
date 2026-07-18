@@ -26,9 +26,9 @@ app.use(cors({
 // HTTP Request Logger
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// JSON Body Parser
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// JSON Body Parser with elevated limits for multimodal image payloads (Base64)
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ limit: '15mb', extended: true }));
 
 // Serve Uploads folder as static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

@@ -53,7 +53,7 @@ export const Settings: React.FC = () => {
                   disabled
                   className="w-full bg-slate-950 border border-slate-850 rounded-lg px-3.5 py-2.5 text-xs font-medium text-slate-450 cursor-not-allowed outline-none"
                 >
-                  <option value="gemini">Google Gemini (Active default)</option>
+                  <option value="gemini">Google Gemini 1.5 (Active)</option>
                   <option value="openai">OpenAI GPT-4o</option>
                   <option value="anthropic">Anthropic Claude 3.5 Sonnet</option>
                 </select>

@@ -99,17 +99,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 md:px-8 space-y-1 relative scrollbar-thin">
-      {/* Global Error Banner */}
-      {error && (
-        <div className="flex items-center gap-3 p-4 bg-red-950/20 border border-red-500/20 rounded-xl text-xs text-red-400 my-2">
-          <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-400" />
-          <div className="flex-1">
-            <p className="font-semibold text-red-300 mb-0.5">System Error Status</p>
-            <p className="text-slate-400 leading-normal">{error}</p>
-          </div>
-        </div>
-      )}
-
       {/* Render bubble rows */}
       {messages.map((message) => (
         <MessageBubble key={message.id || message._id} message={message} />
@@ -122,6 +111,17 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <div className="flex items-center gap-2 px-4 py-3 bg-slate-900 border border-slate-800 rounded-2xl rounded-bl-sm shadow-sm">
             <TypingIndicator />
             <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest ml-1">UniAssist is thinking...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Global Error Banner (displayed at bottom above input bar for maximum visibility) */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 bg-red-950/20 border border-red-500/20 rounded-xl text-xs text-red-400 my-4 animate-fadeIn">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-400" />
+          <div className="flex-1">
+            <p className="font-semibold text-red-300 mb-0.5">System Error Status</p>
+            <p className="text-slate-400 leading-normal">{error}</p>
           </div>
         </div>
       )}

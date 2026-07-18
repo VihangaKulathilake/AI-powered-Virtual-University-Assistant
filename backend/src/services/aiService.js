@@ -7,7 +7,7 @@ class AIService {
       console.warn('[AI Service] WARNING: GEMINI_API_KEY is not set. AI responses will fail.');
     }
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    this.modelName = 'gemini-3.5-flash';
+    this.modelName = 'gemini-2.5-flash';
   }
 
   /**
@@ -64,29 +64,43 @@ class AIService {
       // Build Gemini-compatible multi-turn history (exclude the current message)
       const history = this._buildChatHistory(chatHistory);
 
-      // Start a chat session with the historical context
-      const chat = model.startChat({ history });
-
-      // Construct request parts (supporting multimodality)
-      let requestPayload;
+      let text;
+      
+      // If an image is attached, bypass chat.sendMessage to ensure model parses inlineData correctly
       if (image && image.data && image.mimeType) {
-        requestPayload = [
-          { text: userMessage },
-          {
-            inlineData: {
-              data: image.data,
-              mimeType: image.mimeType,
+        const contents = [];
+        
+        // 1. Build conversation history
+        for (const msg of chatHistory) {
+          const role = msg.role || msg.sender;
+          contents.push({
+            role: role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: msg.content }],
+          });
+        }
+        
+        // 2. Add current message with image parts
+        contents.push({
+          role: 'user',
+          parts: [
+            { text: userMessage || 'Explain the attached screenshot.' },
+            {
+              inlineData: {
+                data: image.data,
+                mimeType: image.mimeType,
+              },
             },
-          },
-        ];
-      } else {
-        requestPayload = userMessage;
-      }
+          ],
+        });
 
-      // Send the current user message (multimodal or text) and await the response
-      const result = await chat.sendMessage(requestPayload);
-      const response = result.response;
-      const text = response.text();
+        const result = await model.generateContent({ contents });
+        text = result.response.text();
+      } else {
+        // Fallback to stateful chat session for text-only queries
+        const chat = model.startChat({ history });
+        const result = await chat.sendMessage(userMessage);
+        text = result.response.text();
+      }
 
       if (!text || !text.trim()) {
         throw new Error('Gemini returned an empty response.');
@@ -96,8 +110,21 @@ class AIService {
     } catch (err) {
       console.error(`[AI Service] Gemini generation error: ${err.message}`);
 
+      let errorMessage = err.message;
+      if (
+        err.message.includes('Quota exceeded') || 
+        err.message.includes('quota') ||
+        err.message.includes('429') || 
+        err.message.includes('ResourceExhausted') ||
+        err.message.includes('limit')
+      ) {
+        errorMessage = 'Google Gemini API quota limit exceeded. You have reached the maximum requests limit for your API key. Please wait a few minutes, check your Google AI Studio quota allocations, or try again later.';
+      } else {
+        errorMessage = `AI generation failed: ${err.message}`;
+      }
+
       // Surface a clean error to the caller instead of crashing silently
-      const error = new Error(`AI generation failed: ${err.message}`);
+      const error = new Error(errorMessage);
       error.statusCode = 503;
       throw error;
     }

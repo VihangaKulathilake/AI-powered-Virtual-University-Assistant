@@ -17,7 +17,8 @@ export const Chat: React.FC = () => {
     try {
       await sendMessage(content, image);
     } catch (err: any) {
-      setError(err?.message || 'An error occurred while sending your request to the university assistant. Please check configurations.');
+      const serverMessage = err.response?.data?.message || err.response?.data?.error;
+      setError(serverMessage || err?.message || 'An error occurred while sending your request to the university assistant. Please check configurations.');
     }
   };
 
