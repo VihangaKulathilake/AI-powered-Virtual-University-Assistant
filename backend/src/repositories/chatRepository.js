@@ -1,31 +1,32 @@
-const ChatSession = require('../models/chatModel');
+const Chat = require('../models/chatModel');
 
 class ChatRepository {
   /**
-   * Find sessions belonging to a user
+   * Find all chat sessions sorted by last update date
    */
-  async findSessionsByUserId(userId) {
-    // In production: return ChatSession.find({ userId }).sort({ updatedAt: -1 });
-    console.log(`[ChatRepository] Finding sessions for user: ${userId}`);
-    return Promise.resolve([]);
+  async findAll() {
+    return Chat.find().sort({ updatedAt: -1 });
   }
 
   /**
-   * Create a new session record
+   * Find a chat session by its unique ID
    */
-  async createSession(sessionData) {
-    // In production: const session = new ChatSession(sessionData); return session.save();
-    console.log(`[ChatRepository] Saving new session:`, sessionData);
-    return Promise.resolve({ id: `session-${Date.now()}`, ...sessionData });
+  async findById(id) {
+    return Chat.findById(id);
   }
 
   /**
-   * Add a message payload to an existing session thread
+   * Create a new chat session document
    */
-  async addMessage(sessionId, messageData) {
-    // In production: find session, push message, save
-    console.log(`[ChatRepository] Adding message to session ${sessionId}:`, messageData);
-    return Promise.resolve({ id: `msg-${Date.now()}`, ...messageData, timestamp: new Date() });
+  async create(chatData) {
+    return Chat.create(chatData);
+  }
+
+  /**
+   * Delete a chat session document
+   */
+  async delete(id) {
+    return Chat.findByIdAndDelete(id);
   }
 }
 
