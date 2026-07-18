@@ -36,7 +36,7 @@ const mapFileStatus = (file) => {
 };
 
 /**
- * Handle incoming document upload requests, execute processing pipeline, and save metadata
+ * Handle incoming document upload requests, execute processing pipeline, and save metadata (user-scoped)
  */
 const uploadFile = async (req, res, next) => {
   try {
@@ -51,6 +51,7 @@ const uploadFile = async (req, res, next) => {
       storedName: req.file.filename,
       fileType: req.file.mimetype,
       fileSize: req.file.size,
+      userId: req.user._id, // Add authenticated user scope
     };
 
     // Execute upload metadata creation and the full chunking pipeline synchronously
@@ -66,11 +67,11 @@ const uploadFile = async (req, res, next) => {
 };
 
 /**
- * Retrieve list of all uploaded knowledge files
+ * Retrieve list of all uploaded knowledge files (user-scoped)
  */
 const getFiles = async (req, res, next) => {
   try {
-    const files = await knowledgeService.getFiles();
+    const files = await knowledgeService.getFiles(req.user._id);
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: files.map(mapFileStatus),
@@ -81,11 +82,11 @@ const getFiles = async (req, res, next) => {
 };
 
 /**
- * Retrieve generated chunks for debugging/testing
+ * Retrieve generated chunks for debugging/testing (user-scoped)
  */
 const getChunks = async (req, res, next) => {
   try {
-    const chunks = await knowledgeService.getChunksByFileId(req.params.id);
+    const chunks = await knowledgeService.getChunksByFileId(req.params.id, req.user._id);
     
     // Map response structure precisely matching prompt requirement
     const formattedChunks = chunks.map(chunk => ({
@@ -103,11 +104,11 @@ const getChunks = async (req, res, next) => {
 };
 
 /**
- * Retrieve pipeline processing status
+ * Retrieve pipeline processing status (user-scoped)
  */
 const getStatus = async (req, res, next) => {
   try {
-    const file = await knowledgeService.getFileById(req.params.id);
+    const file = await knowledgeService.getFileById(req.params.id, req.user._id);
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: {
@@ -120,11 +121,11 @@ const getStatus = async (req, res, next) => {
 };
 
 /**
- * Delete a specific knowledge file, related chunks, and disk storage physical copy
+ * Delete a specific knowledge file, related chunks, and disk storage physical copy (user-scoped)
  */
 const deleteFile = async (req, res, next) => {
   try {
-    await knowledgeService.deleteFile(req.params.id);
+    await knowledgeService.deleteFile(req.params.id, req.user._id);
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: null,

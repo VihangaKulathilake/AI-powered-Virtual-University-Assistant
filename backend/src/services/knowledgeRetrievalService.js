@@ -2,17 +2,18 @@ const pineconeService = require('./pineconeService');
 
 class KnowledgeRetrievalService {
   /**
-   * Retrieve the top-N most relevant knowledge chunks from Pinecone using semantic similarity
+   * Retrieve the top-N most relevant knowledge chunks from Pinecone using semantic similarity scoped by userId
    * @param {string} query User query text
    * @param {number} limit Maximum number of chunks to return (default 5)
+   * @param {string} userId Owner student's MongoDB ID to filter vector results
    * @returns {Promise<string>} Formatted context string ready for AI prompt injection
    */
-  async retrieveRelevantChunks(query, limit = 5) {
+  async retrieveRelevantChunks(query, limit = 5, userId = null) {
     if (!query || !query.trim()) return '';
 
     try {
-      // 1. Query Pinecone for matches
-      const matches = await pineconeService.querySemanticMatches(query, limit);
+      // 1. Query Pinecone for matches, filtering by userId scope
+      const matches = await pineconeService.querySemanticMatches(query, limit, userId);
 
       if (!matches || matches.length === 0) return '';
 

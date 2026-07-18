@@ -5,10 +5,12 @@ const aiService = require('./aiService');
 
 class MessageService {
   /**
-   * Get all messages in a specific chat session
+   * Get all messages in a specific chat session, scoped to a user
+   * @param {string} chatId Chat session ID
+   * @param {string} userId Owner student user ID
    */
-  async getMessages(chatId) {
-    const chat = await chatRepository.findById(chatId);
+  async getMessages(chatId, userId) {
+    const chat = await chatRepository.findById(chatId, userId);
     if (!chat) {
       const error = new Error(`Chat session not found with ID: ${chatId}`);
       error.statusCode = 404;
@@ -21,11 +23,12 @@ class MessageService {
    * Save a user message, generate a real AI response, and persist both to MongoDB
    * @param {string} chatId Target chat session ID
    * @param {object} messageData Object containing { content }
+   * @param {string} userId Owner student user ID
    * @returns {Promise<object>} The saved user message document
    */
-  async createMessage(chatId, messageData) {
-    // Verify chat session exists
-    const chat = await chatRepository.findById(chatId);
+  async createMessage(chatId, messageData, userId) {
+    // Verify chat session exists and is owned by this user
+    const chat = await chatRepository.findById(chatId, userId);
     if (!chat) {
       const error = new Error(`Chat session not found with ID: ${chatId}`);
       error.statusCode = 404;
@@ -40,16 +43,16 @@ class MessageService {
     });
 
     // Step 2: Load the full conversation history for multi-turn context
-    // Exclude the message we just saved to avoid duplicate inclusion
     const history = await messageRepository.findByChatId(chatId);
     const previousMessages = history.filter(
       msg => msg._id.toString() !== userMsg._id.toString()
     );
 
-    // Step 3: Retrieve relevant knowledge chunks via keyword-based RAG search
+    // Step 3: Retrieve relevant knowledge chunks via semantic Pinecone search, filtered by userId
     const knowledgeContext = await knowledgeRetrievalService.retrieveRelevantChunks(
       messageData.content,
-      5 // Top 5 most relevant chunks
+      5,
+      userId
     );
 
     // Step 4: Generate a real AI response using Gemini with context

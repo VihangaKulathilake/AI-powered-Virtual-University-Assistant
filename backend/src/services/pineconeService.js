@@ -36,21 +36,22 @@ class PineconeService {
    * @param {Array<{content: string, chunkIndex: number}>} chunks Split document text chunks
    * @param {string} fileId MongoDB file ID reference
    * @param {string} fileName Original document filename
+   * @param {string} userId Owner student's MongoDB user ID
    * @returns {Promise<Array<object>>} Metadata array representing saved chunk structures
    */
-  async upsertDocumentChunks(chunks = [], fileId, fileName) {
+  async upsertDocumentChunks(chunks = [], fileId, fileName, userId) {
     if (!chunks || chunks.length === 0) return [];
     
     this._ensureInit();
 
     try {
-      console.log(`[Pinecone Service] Vectorizing and uploading ${chunks.length} chunks for: "${fileName}"`);
+      console.log(`[Pinecone Service] Vectorizing and uploading ${chunks.length} chunks for: "${fileName}" (User: ${userId})`);
       
       const upsertVectors = [];
       const chunkMetadataRecords = [];
 
       for (const chunk of chunks) {
-        // Generate the 768-dimensional embedding vector via Gemini
+        // Generate the 3072-dimensional embedding vector via Gemini
         const embeddingValues = await embeddingService.generateEmbedding(chunk.content);
 
         // Generate a unique ID for this vector
@@ -64,6 +65,7 @@ class PineconeService {
             fileId: fileId.toString(),
             fileName: fileName,
             chunkIndex: chunk.chunkIndex,
+            userId: userId ? userId.toString() : 'system', // Store owner scope in vector metadata
           },
         });
 
@@ -90,9 +92,10 @@ class PineconeService {
    * Search Pinecone for chunks semantically similar to the input user query
    * @param {string} query User query string
    * @param {number} limit Maximum matches to return (default 5)
+   * @param {string} userId Owner student's user ID for semantic search scoping
    * @returns {Promise<Array<{text: string, score: number, fileName: string}>>} Array of matched chunks
    */
-  async querySemanticMatches(query, limit = 5) {
+  async querySemanticMatches(query, limit = 5, userId = null) {
     if (!query || !query.trim()) return [];
 
     this._ensureInit();
@@ -101,18 +104,27 @@ class PineconeService {
       // 1. Convert user search query to vector embedding
       const queryEmbedding = await embeddingService.generateEmbedding(query);
 
-      // 2. Query Pinecone
-      const queryResponse = await this.index.query({
+      // 2. Build query parameters with metadata filtering by userId
+      const queryOptions = {
         vector: queryEmbedding,
         topK: limit,
         includeMetadata: true,
-      });
+      };
+
+      if (userId) {
+        queryOptions.filter = {
+          userId: { $eq: userId.toString() },
+        };
+      }
+
+      // 3. Query Pinecone
+      const queryResponse = await this.index.query(queryOptions);
 
       if (!queryResponse || !queryResponse.matches) {
         return [];
       }
 
-      // 3. Map matches to clean response blocks
+      // 4. Map matches to clean response blocks
       return queryResponse.matches.map(match => ({
         text: match.metadata ? match.metadata.text : '',
         score: match.score || 0,
@@ -148,6 +160,24 @@ class PineconeService {
     } catch (err) {
       console.error(`[Pinecone Service] Delete failure: ${err.message}`);
       // Log error but do not block cascading operations
+    }
+  }
+
+  /**
+   * Deletes all profile and system testing vectors that were uploaded during test scripts
+   */
+  async cleanProfileVectors() {
+    this._ensureInit();
+    try {
+      console.log('[Pinecone Service] Removing student profile vectors...');
+      await this.index.deleteMany({
+        filter: {
+          source: { $eq: 'student-profile' },
+        },
+      });
+      console.log('[Pinecone Service] Student profile vectors cleared.');
+    } catch (err) {
+      console.warn(`[Pinecone Service] Cleanup warning: ${err.message}`);
     }
   }
 }

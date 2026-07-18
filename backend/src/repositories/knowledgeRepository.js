@@ -2,17 +2,20 @@ const KnowledgeFile = require('../models/knowledgeFileModel');
 
 class KnowledgeRepository {
   /**
-   * Find all files metadata in database sorted by upload date
+   * Find all files metadata in database uploaded by a specific user
+   * @param {string} userId Owner user's MongoDB ID
    */
-  async findAll() {
-    return KnowledgeFile.find().sort({ uploadDate: -1 });
+  async findAll(userId) {
+    return KnowledgeFile.find({ userId }).sort({ uploadDate: -1 });
   }
 
   /**
-   * Find a file metadata by its unique ID
+   * Find a file metadata by ID, scoped to user
+   * @param {string} id KnowledgeFile ID
+   * @param {string} userId Owner user's MongoDB ID
    */
-  async findById(id) {
-    return KnowledgeFile.findById(id);
+  async findById(id, userId) {
+    return KnowledgeFile.findOne({ _id: id, userId });
   }
 
   /**
@@ -24,9 +27,11 @@ class KnowledgeRepository {
 
   /**
    * Delete a file metadata document from database
+   * @param {string} id KnowledgeFile ID
+   * @param {string} userId Owner user's MongoDB ID
    */
-  async delete(id) {
-    return KnowledgeFile.findByIdAndDelete(id);
+  async delete(id, userId) {
+    return KnowledgeFile.findOneAndDelete({ _id: id, userId });
   }
 
   /**
@@ -50,9 +55,10 @@ class KnowledgeRepository {
   /**
    * Delete metadata record for knowledge file
    * @param {string} id KnowledgeFile ID
+   * @param {string} userId Owner user's MongoDB ID
    */
-  async deleteKnowledgeFile(id) {
-    return this.delete(id);
+  async deleteKnowledgeFile(id, userId) {
+    return this.delete(id, userId);
   }
 }
 

@@ -64,11 +64,11 @@ const deleteChat = async (req, res, next) => {
 };
 
 /**
- * Get all messages in a specific chat session
+ * Get all messages in a specific chat session (user-scoped check)
  */
 const getMessages = async (req, res, next) => {
   try {
-    const messages = await messageService.getMessages(req.params.id);
+    const messages = await messageService.getMessages(req.params.id, req.user._id);
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: messages,
@@ -79,11 +79,11 @@ const getMessages = async (req, res, next) => {
 };
 
 /**
- * Send a message to a specific chat session
+ * Send a message to a specific chat session (user-scoped check)
  */
 const createMessage = async (req, res, next) => {
   try {
-    const message = await messageService.createMessage(req.params.id, req.body);
+    const message = await messageService.createMessage(req.params.id, req.body, req.user._id);
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: message,

@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const KnowledgeFileSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  },
   originalName: {
     type: String,
     required: [true, 'Original filename is required'],

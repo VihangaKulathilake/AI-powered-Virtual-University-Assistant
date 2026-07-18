@@ -9,17 +9,17 @@ const pineconeService = require('./pineconeService');
 
 class KnowledgeService {
   /**
-   * Get list of all knowledge files in database
+   * Get list of all knowledge files in database scoped to user
    */
-  async getFiles() {
-    return knowledgeRepository.findAll();
+  async getFiles(userId) {
+    return knowledgeRepository.findAll(userId);
   }
 
   /**
-   * Get a specific file metadata by ID
+   * Get a specific file metadata by ID scoped to user
    */
-  async getFileById(id) {
-    const file = await knowledgeRepository.findById(id);
+  async getFileById(id, userId) {
+    const file = await knowledgeRepository.findById(id, userId);
     if (!file) {
       const error = new Error(`Knowledge file not found with ID: ${id}`);
       error.statusCode = 404;
@@ -30,7 +30,7 @@ class KnowledgeService {
 
   /**
    * Run the document processing pipeline on an uploaded file
-   * @param {object} fileData Metadata from upload
+   * @param {object} fileData Metadata from upload (includes userId)
    */
   async createFile(fileData) {
     // Step 1: Create KnowledgeFile record in UPLOADED status
@@ -66,8 +66,8 @@ class KnowledgeService {
         }));
         await chunkRepository.createManyChunks(chunkDocuments);
 
-        // Upload embedding vectors to Pinecone
-        await pineconeService.upsertDocumentChunks(chunks, fileId, fileData.originalName);
+        // Upload embedding vectors to Pinecone, passing user ID for scoping
+        await pineconeService.upsertDocumentChunks(chunks, fileId, fileData.originalName, fileData.userId);
       }
 
       // Step 7: Update status to READY with length and processedAt timestamp
@@ -99,8 +99,8 @@ class KnowledgeService {
   /**
    * Delete file metadata record, cascade chunks removal, and delete local physical file from disk
    */
-  async deleteFile(id) {
-    const file = await knowledgeRepository.findById(id);
+  async deleteFile(id, userId) {
+    const file = await knowledgeRepository.findById(id, userId);
     if (!file) {
       const error = new Error(`Knowledge file not found with ID: ${id}`);
       error.statusCode = 404;
@@ -124,15 +124,15 @@ class KnowledgeService {
     }
 
     // 4. Delete knowledge file metadata record from database
-    return knowledgeRepository.delete(fileId);
+    return knowledgeRepository.delete(fileId, userId);
   }
 
   /**
    * Get all chunks associated with a specific file ID (for debugging/testing)
    */
-  async getChunksByFileId(fileId) {
+  async getChunksByFileId(fileId, userId) {
     // Verify file exists first
-    const file = await this.getFileById(fileId);
+    const file = await this.getFileById(fileId, userId);
     return chunkRepository.findByFileId(file._id);
   }
 }
