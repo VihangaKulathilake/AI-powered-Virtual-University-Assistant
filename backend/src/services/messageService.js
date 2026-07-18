@@ -1,5 +1,7 @@
 const messageRepository = require('../repositories/messageRepository');
 const chatRepository = require('../repositories/chatRepository');
+const knowledgeRetrievalService = require('./knowledgeRetrievalService');
+const aiService = require('./aiService');
 
 class MessageService {
   /**
@@ -16,9 +18,13 @@ class MessageService {
   }
 
   /**
-   * Save a user message and automatically save a template AI reply to the database
+   * Save a user message, generate a real AI response, and persist both to MongoDB
+   * @param {string} chatId Target chat session ID
+   * @param {object} messageData Object containing { content }
+   * @returns {Promise<object>} The saved user message document
    */
   async createMessage(chatId, messageData) {
+    // Verify chat session exists
     const chat = await chatRepository.findById(chatId);
     if (!chat) {
       const error = new Error(`Chat session not found with ID: ${chatId}`);
@@ -26,18 +32,38 @@ class MessageService {
       throw error;
     }
 
-    // 1. Create and save user query message
+    // Step 1: Save the user message to MongoDB
     const userMsg = await messageRepository.create({
       chatId,
       role: 'user',
       content: messageData.content,
     });
 
-    // 2. Auto-generate and save a placeholder assistant response to Mongoose
+    // Step 2: Load the full conversation history for multi-turn context
+    // Exclude the message we just saved to avoid duplicate inclusion
+    const history = await messageRepository.findByChatId(chatId);
+    const previousMessages = history.filter(
+      msg => msg._id.toString() !== userMsg._id.toString()
+    );
+
+    // Step 3: Retrieve relevant knowledge chunks via keyword-based RAG search
+    const knowledgeContext = await knowledgeRetrievalService.retrieveRelevantChunks(
+      messageData.content,
+      5 // Top 5 most relevant chunks
+    );
+
+    // Step 4: Generate a real AI response using Gemini with context
+    const aiResponseText = await aiService.generateResponse(
+      messageData.content,
+      previousMessages,
+      knowledgeContext
+    );
+
+    // Step 5: Save the AI-generated assistant reply to MongoDB
     await messageRepository.create({
       chatId,
       role: 'assistant',
-      content: `I received your coursework query: **"${messageData.content}"**.\n\nThe Gemini/OpenAI integration will process your uploaded files and provide a customized response here. REST APIs are fully ready.`,
+      content: aiResponseText,
     });
 
     return userMsg;
