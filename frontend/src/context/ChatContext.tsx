@@ -13,6 +13,7 @@ interface ChatContextType {
   sendMessage: (content: string) => Promise<void>;
   uploadFile: (file: File) => Promise<void>;
   deleteSession: (id: string) => void;
+  deleteDocument: (id: string) => void;
 }
 
 export const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -151,6 +152,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const deleteDocument = (id: string) => {
+    setDocuments((prev) => prev.filter((d) => d.id !== id));
+  };
+
   return (
     <ChatContext.Provider
       value={{
@@ -165,6 +170,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sendMessage,
         uploadFile,
         deleteSession,
+        deleteDocument,
       }}
     >
       {children}

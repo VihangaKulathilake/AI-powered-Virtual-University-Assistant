@@ -9,6 +9,7 @@ import Chat from '../pages/Chat/Chat';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import Settings from '../pages/Settings/Settings';
 import NotFound from '../pages/NotFound/NotFound';
+import UploadPanel from '../components/upload/UploadPanel';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -20,6 +21,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/" element={<Home />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/upload" element={<div className="h-full bg-slate-900 border border-slate-800/80 rounded-xl p-6 shadow-sm"><UploadPanel /></div>} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>

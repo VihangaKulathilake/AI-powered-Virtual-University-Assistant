@@ -1,20 +1,77 @@
 :root {
-  --primary-glow: radial-gradient(rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0));
+  --primary-glow: radial-gradient(rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0));
   --secondary-glow: radial-gradient(rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0));
 }
 
-.glow-bg {
-  position: relative;
+/* Glassmorphism panel styles */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.glow-bg::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--primary-glow);
-  z-index: -1;
-  pointer-events: none;
+.glass-panel-hover {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Custom styles for theme classes */
+.theme-slate {
+  --color-brand: #6366f1; /* Indigo */
+  --color-brand-hover: #4f46e5;
+  --color-brand-light: rgba(99, 102, 241, 0.1);
+  --color-brand-border: rgba(99, 102, 241, 0.2);
+}
+
+.theme-blue {
+  --color-brand: #3b82f6; /* Blue */
+  --color-brand-hover: #2563eb;
+  --color-brand-light: rgba(59, 130, 246, 0.1);
+  --color-brand-border: rgba(59, 130, 246, 0.2);
+}
+
+.theme-emerald {
+  --color-brand: #10b981; /* Emerald */
+  --color-brand-hover: #059669;
+  --color-brand-light: rgba(16, 185, 129, 0.1);
+  --color-brand-border: rgba(16, 185, 129, 0.2);
+}
+
+/* Dynamic brand class bindings */
+.bg-brand {
+  background-color: var(--color-brand);
+}
+.bg-brand-hover:hover {
+  background-color: var(--color-brand-hover);
+}
+.text-brand {
+  color: var(--color-brand);
+}
+.border-brand {
+  border-color: var(--color-brand-border);
+}
+.bg-brand-light {
+  background-color: var(--color-brand-light);
+}
+
+/* Bouncing Animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+}
+
+.glow-glow {
+  animation: pulse-glow 3s infinite ease-in-out;
 }

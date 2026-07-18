@@ -1,20 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { type Message } from '../../types';
-import { FileText, GraduationCap } from 'lucide-react';
-import { formatTime, cn } from '../../utils/helpers';
+import { FileText, GraduationCap, Copy, Check } from 'lucide-react';
+import { formatTime, cn, parseMarkdown } from '../../utils/helpers';
 
 interface MessageBubbleProps {
   message: Message;
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+  const [copied, setCopied] = useState(false);
   const isUser = message.sender === 'user';
   const isSystem = message.sender === 'system';
 
+  const handleCopyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy message:', err);
+    }
+  };
+
   if (isSystem) {
     return (
-      <div className="flex justify-center my-3">
-        <span className="px-3 py-1 text-xs font-medium text-slate-500 bg-slate-800/40 rounded-full border border-slate-850">
+      <div className="flex justify-center my-3.5">
+        <span className="px-3.5 py-1.5 text-[10px] font-semibold text-slate-500 bg-slate-900/60 rounded-full border border-slate-850 tracking-wider uppercase">
           {message.content}
         </span>
       </div>
@@ -22,35 +33,38 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   }
 
   return (
-    <div className={cn('flex gap-3 my-4', isUser ? 'flex-row-reverse' : 'flex-row')}>
+    <div className={cn('flex gap-4 my-6 group', isUser ? 'flex-row-reverse' : 'flex-row')}>
       {/* Sender Avatar */}
       <div className="flex-shrink-0">
         {isUser ? (
-          <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-xs font-bold text-white shadow-md select-none">
+          <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-md select-none border border-indigo-500/30">
             JD
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-violet-400 shadow-md select-none">
-            <GraduationCap className="w-4 h-4 text-violet-400" />
+          <div className="w-9 h-9 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-xs font-bold text-indigo-400 shadow-md select-none">
+            <GraduationCap className="w-5 h-5 text-indigo-400 glow-glow" />
           </div>
         )}
       </div>
 
-      {/* Bubble Content */}
-      <div className={cn('flex flex-col max-w-[70%]', isUser ? 'items-end' : 'items-start')}>
+      {/* Bubble Content Area */}
+      <div className={cn('flex flex-col max-w-[75%] sm:max-w-[70%]', isUser ? 'items-end' : 'items-start')}>
         <div
           className={cn(
-            'px-4 py-3 rounded-2xl border text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm',
+            'px-5 py-4 rounded-2xl border text-sm leading-relaxed shadow-sm relative',
             isUser
-              ? 'bg-violet-600 border-violet-500 text-white rounded-tr-none'
-              : 'bg-slate-800/80 border-slate-700/80 text-slate-100 rounded-tl-none'
+              ? 'bg-indigo-650 border-indigo-550 text-slate-100 rounded-tr-none'
+              : 'bg-slate-900 border-slate-800 text-slate-200 rounded-tl-none'
           )}
         >
-          {message.content}
+          {/* Render Markdown parsed tags */}
+          <div className="space-y-1">
+            {parseMarkdown(message.content)}
+          </div>
 
           {/* Render Attachments if any */}
           {message.attachments && message.attachments.length > 0 && (
-            <div className="mt-3 pt-2.5 border-t border-white/10 space-y-1.5 w-full">
+            <div className="mt-4 pt-3 border-t border-slate-800 space-y-2 w-full">
               {message.attachments.map((file) => (
                 <a
                   key={file.id}
@@ -58,28 +72,43 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                   target="_blank"
                   rel="noreferrer"
                   className={cn(
-                    'flex items-center gap-2 p-2 rounded-lg text-xs font-medium transition-colors border',
+                    'flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-medium transition-all duration-150 border',
                     isUser
-                      ? 'bg-violet-750 border-violet-500 hover:bg-violet-800 text-white'
-                      : 'bg-slate-900/50 border-slate-750 hover:bg-slate-900 text-slate-300'
+                      ? 'bg-indigo-700/60 border-indigo-500/20 hover:bg-indigo-750 text-indigo-200'
+                      : 'bg-slate-950 border-slate-850 hover:bg-slate-950/80 text-slate-350 hover:text-slate-200'
                   )}
                 >
-                  <FileText className="w-4 h-4 text-violet-400" />
-                  <span className="truncate flex-1">{file.name}</span>
+                  <FileText className="w-4 h-4 text-indigo-400" />
+                  <span className="truncate flex-1 font-mono">{file.name}</span>
                 </a>
               ))}
             </div>
           )}
         </div>
 
-        {/* Message Meta (Timestamp) */}
-        <span className="mt-1.5 text-[10px] font-medium text-slate-500 tracking-wider">
-          {formatTime(message.timestamp)}
-        </span>
+        {/* Message Meta & Action Buttons */}
+        <div className="flex items-center gap-3 mt-1.5 px-1">
+          <span className="text-[10px] font-semibold text-slate-500 tracking-wider">
+            {formatTime(message.timestamp)}
+          </span>
+          {!isSystem && (
+            <button
+              onClick={handleCopyMessage}
+              type="button"
+              className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+              title="Copy message content"
+            >
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 export default MessageBubble;
-// Helper placeholder style inside tailwind config for custom styles
