@@ -1,118 +1,103 @@
+const chatService = require('../services/chatService');
+const messageService = require('../services/messageService');
 const { HTTP_STATUS } = require('../constants');
 
 /**
- * @desc    Get all chat sessions
- * @route   GET /api/chats/sessions
- * @access  Private
+ * Get all chat sessions
  */
-const getSessions = async (req, res, next) => {
+const getChats = async (req, res, next) => {
   try {
-    const mockSessions = [
-      {
-        id: 'session-1',
-        title: 'Introduction to Calculus I',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        messagesCount: 2,
-      },
-      {
-        id: 'session-2',
-        title: 'Database Normalization Help',
-        createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-        updatedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-        messagesCount: 4,
-      }
-    ];
-
-    res.status(HTTP_STATUS.OK).json(mockSessions);
+    const chats = await chatService.getChats();
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: chats,
+    });
   } catch (error) {
     next(error);
   }
 };
 
 /**
- * @desc    Create a new chat session
- * @route   POST /api/chats/sessions
- * @access  Private
+ * Create a new chat session
  */
-const createSession = async (req, res, next) => {
+const createChat = async (req, res, next) => {
   try {
-    const { title } = req.body;
-    const newSession = {
-      id: `session-${Date.now()}`,
-      title: title || 'New Conversation',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      messagesCount: 0,
-    };
-
-    res.status(HTTP_STATUS.CREATED).json(newSession);
+    const chat = await chatService.createChat(req.body);
+    res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: chat,
+    });
   } catch (error) {
     next(error);
   }
 };
 
 /**
- * @desc    Get messages inside a session
- * @route   GET /api/chats/sessions/:sessionId/messages
- * @access  Private
+ * Get a specific chat session by ID
+ */
+const getChatById = async (req, res, next) => {
+  try {
+    const chat = await chatService.getChatById(req.params.id);
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: chat,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Delete a specific chat session and its cascade messages
+ */
+const deleteChat = async (req, res, next) => {
+  try {
+    await chatService.deleteChat(req.params.id);
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: null,
+      message: 'Chat session deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get all messages in a specific chat session
  */
 const getMessages = async (req, res, next) => {
   try {
-    const { sessionId } = req.params;
-    const mockMessages = [
-      {
-        id: 'msg-1',
-        sender: 'assistant',
-        content: `Welcome to conversation session ${sessionId}. Ask me any questions!`,
-        timestamp: new Date().toISOString(),
-      }
-    ];
-
-    res.status(HTTP_STATUS.OK).json(mockMessages);
+    const messages = await messageService.getMessages(req.params.id);
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: messages,
+    });
   } catch (error) {
     next(error);
   }
 };
 
 /**
- * @desc    Send a message to a session
- * @route   POST /api/chats/sessions/:sessionId/messages
- * @access  Private
+ * Send a message to a specific chat session
  */
-const sendMessage = async (req, res, next) => {
+const createMessage = async (req, res, next) => {
   try {
-    const { content } = req.body;
-    const userMsg = {
-      id: `msg-${Date.now()}`,
-      sender: 'user',
-      content,
-      timestamp: new Date().toISOString(),
-    };
-
-    res.status(HTTP_STATUS.CREATED).json(userMsg);
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * @desc    Delete a chat session
- * @route   DELETE /api/chats/sessions/:sessionId
- * @access  Private
- */
-const deleteSession = async (req, res, next) => {
-  try {
-    res.status(HTTP_STATUS.OK).json({ success: true, message: 'Session deleted successfully' });
+    const message = await messageService.createMessage(req.params.id, req.body);
+    res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: message,
+    });
   } catch (error) {
     next(error);
   }
 };
 
 module.exports = {
-  getSessions,
-  createSession,
+  getChats,
+  createChat,
+  getChatById,
+  deleteChat,
   getMessages,
-  sendMessage,
-  deleteSession,
+  createMessage,
 };

@@ -1,20 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const chatController = require('../controllers/chatController');
-const { protect } = require('../middleware/authMiddleware');
+const { validateId, validateCreateChat, validateCreateMessage } = require('../validators/chatValidator');
 
-// Get all active sessions and create a new session
-router.route('/sessions')
-  .get(protect, chatController.getSessions)
-  .post(protect, chatController.createSession);
+// GET /api/chats and POST /api/chats
+router.route('/')
+  .get(chatController.getChats)
+  .post(validateCreateChat, chatController.createChat);
 
-// Get messages and post message to a specific session
-router.route('/sessions/:sessionId/messages')
-  .get(protect, chatController.getMessages)
-  .post(protect, chatController.sendMessage);
+// GET /api/chats/:id and DELETE /api/chats/:id
+router.route('/:id')
+  .get(validateId, chatController.getChatById)
+  .delete(validateId, chatController.deleteChat);
 
-// Delete a conversation session
-router.route('/sessions/:sessionId')
-  .delete(protect, chatController.deleteSession);
+// GET /api/chats/:id/messages and POST /api/chats/:id/messages
+router.route('/:id/messages')
+  .get(validateId, chatController.getMessages)
+  .post(validateId, validateCreateMessage, chatController.createMessage);
 
 module.exports = router;
