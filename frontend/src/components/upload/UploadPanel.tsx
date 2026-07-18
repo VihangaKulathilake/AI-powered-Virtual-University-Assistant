@@ -62,7 +62,7 @@ export const UploadPanel: React.FC = () => {
           </h3>
           {documents.length > 0 && (
             <span className="text-[10px] text-slate-550 font-bold uppercase">
-              {formatBytes(documents.reduce((acc, curr) => acc + curr.size, 0))} Total
+              {formatBytes(documents.reduce((acc, curr) => acc + (curr.size || curr.fileSize || 0), 0))} Total
             </span>
           )}
         </div>
@@ -76,22 +76,22 @@ export const UploadPanel: React.FC = () => {
           ) : (
             documents.map((doc) => (
               <div
-                key={doc.id}
+                key={doc.id || (doc as any)._id}
                 className="flex items-center gap-3.5 p-3.5 bg-slate-900 border border-slate-850 hover:border-slate-800/80 rounded-xl transition-all duration-150 group"
               >
                 <div className="flex-shrink-0 p-2 bg-slate-950 border border-slate-850 rounded-lg">
-                  {getFileIcon(doc.type)}
+                  {getFileIcon(doc.type || doc.fileType || '')}
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-200 truncate mb-0.5" title={doc.name}>
-                    {doc.name}
+                  <p className="text-sm font-semibold text-slate-200 truncate mb-0.5" title={doc.name || doc.originalName || ''}>
+                    {doc.name || doc.originalName || ''}
                   </p>
                   
                   <div className="flex items-center gap-2 text-[10px] text-slate-550 font-medium">
-                    <span>{formatBytes(doc.size)}</span>
+                    <span>{formatBytes(doc.size || doc.fileSize || 0)}</span>
                     <span>•</span>
-                    <span>{formatDate(doc.uploadedAt)}</span>
+                    <span>{formatDate(doc.uploadedAt || doc.uploadDate || '')}</span>
                   </div>
 
                   {/* Progress bar for upload simulation */}
@@ -112,7 +112,7 @@ export const UploadPanel: React.FC = () => {
                   </div>
                   
                   <button
-                    onClick={() => deleteDocument(doc.id)}
+                    onClick={() => deleteDocument(doc.id || (doc as any)._id)}
                     type="button"
                     className="hidden group-hover:flex p-1 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded transition-all cursor-pointer"
                     title="Remove index resource"

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, type ReactNode } from 'react';
 import { type ChatSession, type Message, type UploadedDocument } from '../types';
+import { chatService } from '../services/chatService';
 
 interface ChatContextType {
   sessions: ChatSession[];
@@ -22,138 +23,164 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [typing, setTyping] = useState<boolean>(false);
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
 
-  // Initialize with some starter data if needed (just client-side stubs)
+  // Fetch all chat sessions and document catalogs from database on boot
   useEffect(() => {
-    const defaultSessionId = 'session-1';
-    setSessions([
-      {
-        id: defaultSessionId,
-        title: 'Introduction to Calculus I',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        messagesCount: 2,
-      },
-      {
-        id: 'session-2',
-        title: 'Database Normalization Help',
-        createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-        updatedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-        messagesCount: 4,
-      }
-    ]);
-    setActiveSessionId(defaultSessionId);
+    const initData = async () => {
+      setLoading(true);
+      try {
+        const loadedSessions = await chatService.getSessions();
+        const loadedDocs = await chatService.getDocuments();
+        
+        setSessions(loadedSessions);
+        setDocuments(loadedDocs);
 
-    setMessages([
-      {
-        id: 'msg-1',
-        sender: 'assistant',
-        content: 'Hello! I am your AI University Assistant. How can I help you with your coursework today?',
-        timestamp: new Date(Date.now() - 10000).toISOString(),
+        if (loadedSessions.length > 0) {
+          setActiveSessionId(loadedSessions[0].id || loadedSessions[0]._id || null); // Fallback standard mongo id keys
+        }
+      } catch (err) {
+        console.error('Failed to retrieve initial MERN workspace logs:', err);
+      } finally {
+        setLoading(false);
       }
-    ]);
-
-    setDocuments([
-      {
-        id: 'doc-1',
-        name: 'Calculus_Syllabus.pdf',
-        size: 245000,
-        type: 'application/pdf',
-        status: 'completed',
-        uploadedAt: new Date().toISOString(),
-      }
-    ]);
+    };
+    initData();
   }, []);
 
-  const createNewSession = async (title = 'New Conversation') => {
-    const newSession: ChatSession = {
-      id: `session-${Date.now()}`,
-      title,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      messagesCount: 0,
-    };
-    setSessions((prev) => [newSession, ...prev]);
-    setActiveSessionId(newSession.id);
-    setMessages([
-      {
-        id: `msg-${Date.now()}`,
-        sender: 'assistant',
-        content: `Started a new chat: "${title}". Ask me any questions about it!`,
-        timestamp: new Date().toISOString(),
+  // Retrieve message history whenever the active chat session changes
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!activeSessionId) {
+        setMessages([]);
+        return;
       }
-    ]);
+      
+      setLoading(true);
+      try {
+        const threadMessages = await chatService.getMessages(activeSessionId);
+        setMessages(threadMessages);
+      } catch (err) {
+        console.error(`Failed to retrieve messages for session ${activeSessionId}:`, err);
+        setMessages([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMessages();
+  }, [activeSessionId]);
+
+  const createNewSession = async (title = 'New Conversation') => {
+    try {
+      setLoading(true);
+      const newSession = await chatService.createSession(title);
+      
+      // Update session histories
+      setSessions((prev) => [newSession, ...prev]);
+      setActiveSessionId(newSession.id || (newSession as any)._id);
+    } catch (err) {
+      console.error('Failed to create new session in MongoDB:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const sendMessage = async (content: string) => {
     if (!content.trim() || !activeSessionId) return;
 
-    const userMsg: Message = {
-      id: `msg-${Date.now()}`,
-      sender: 'user',
-      content,
-      timestamp: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
     setTyping(true);
+    try {
+      // 1. Post user message to REST API
+      const userMsg = await chatService.sendMessage(activeSessionId, content);
+      
+      // 2. Append user message locally for instant UI updates
+      setMessages((prev) => [...prev, userMsg]);
 
-    // Simulate bot response after a brief delay
-    setTimeout(() => {
-      const assistantMsg: Message = {
-        id: `msg-${Date.now() + 1}`,
-        sender: 'assistant',
-        content: `I received your query about "${content}". This is a starter response because the AI pipeline is not yet linked. Ready to connect backend model.`,
-        timestamp: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
+      // 3. Force message reload from database to retrieve the auto-generated assistant response
+      // Brief delay to allow database processing
+      setTimeout(async () => {
+        try {
+          const updatedMessages = await chatService.getMessages(activeSessionId);
+          setMessages(updatedMessages);
+        } catch (err) {
+          console.error('Failed to refresh messages after user post:', err);
+        } finally {
+          setTyping(false);
+        }
+      }, 1000);
+      
+    } catch (err) {
+      console.error('Failed to send query to REST backend:', err);
       setTyping(false);
-    }, 1500);
+      throw err;
+    }
   };
 
   const uploadFile = async (file: File) => {
-    const newDoc: UploadedDocument = {
-      id: `doc-${Date.now()}`,
+    // Create local uploading indicator stub
+    const uploadId = `upload-${Date.now()}`;
+    const localUploadDoc: UploadedDocument = {
+      id: uploadId,
       name: file.name,
       size: file.size,
       type: file.type,
       status: 'uploading',
-      progress: 0,
+      progress: 20,
       uploadedAt: new Date().toISOString(),
     };
 
-    setDocuments((prev) => [newDoc, ...prev]);
+    setDocuments((prev) => [localUploadDoc, ...prev]);
 
-    // Simulate upload progress and success
-    let progressVal = 0;
-    const interval = setInterval(() => {
-      progressVal += 20;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Execute upload to Multer server
+      const newFile = await chatService.uploadDocument(formData);
+
+      // Replace loading stub with completed DB metadata
+      setDocuments((prev) =>
+        prev.map((doc) => (doc.id === uploadId ? newFile : doc))
+      );
+    } catch (err) {
+      console.error('Failed to upload coursework document:', err);
+      // Mark loading stub as failed
       setDocuments((prev) =>
         prev.map((doc) =>
-          doc.id === newDoc.id
-            ? { ...doc, progress: progressVal, status: progressVal >= 100 ? 'completed' : 'uploading' }
-            : doc
+          doc.id === uploadId ? { ...doc, status: 'failed', progress: undefined } : doc
         )
       );
-      if (progressVal >= 100) {
-        clearInterval(interval);
-      }
-    }, 300);
-  };
-
-  const deleteSession = (id: string) => {
-    setSessions((prev) => prev.filter((s) => s.id !== id));
-    if (activeSessionId === id) {
-      setActiveSessionId(null);
-      setMessages([]);
     }
   };
 
-  const deleteDocument = (id: string) => {
-    setDocuments((prev) => prev.filter((d) => d.id !== id));
+  const deleteSession = async (id: string) => {
+    try {
+      await chatService.deleteSession(id);
+      
+      setSessions((prev) => prev.filter((s) => (s.id || (s as any)._id) !== id));
+      if (activeSessionId === id) {
+        const remaining = sessions.filter((s) => (s.id || (s as any)._id) !== id);
+        if (remaining.length > 0) {
+          setActiveSessionId(remaining[0].id || (remaining[0] as any)._id);
+        } else {
+          setActiveSessionId(null);
+          setMessages([]);
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to remove session ${id} from database:`, err);
+    }
+  };
+
+  const deleteDocument = async (id: string) => {
+    try {
+      await chatService.deleteDocument(id);
+      setDocuments((prev) => prev.filter((d) => (d.id || (d as any)._id) !== id));
+    } catch (err) {
+      console.error(`Failed to remove knowledge resource ${id}:`, err);
+    }
   };
 
   return (

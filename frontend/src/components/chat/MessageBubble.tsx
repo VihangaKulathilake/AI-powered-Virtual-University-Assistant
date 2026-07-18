@@ -9,8 +9,8 @@ interface MessageBubbleProps {
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const [copied, setCopied] = useState(false);
-  const isUser = message.sender === 'user';
-  const isSystem = message.sender === 'system';
+  const isUser = message.sender === 'user' || message.role === 'user';
+  const isSystem = message.sender === 'system' || message.role === 'system';
 
   const handleCopyMessage = async () => {
     try {
@@ -89,7 +89,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         {/* Message Meta & Action Buttons */}
         <div className="flex items-center gap-3 mt-1.5 px-1">
           <span className="text-[10px] font-semibold text-slate-500 tracking-wider">
-            {formatTime(message.timestamp)}
+            {formatTime(message.timestamp || message.createdAt || '')}
           </span>
           {!isSystem && (
             <button

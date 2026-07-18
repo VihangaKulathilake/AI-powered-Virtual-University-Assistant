@@ -27,7 +27,7 @@ export const Dashboard: React.FC = () => {
   };
 
   // Calculate sum of messages counts
-  const totalAIResponses = sessions.reduce((acc, curr) => acc + Math.floor(curr.messagesCount / 2), 0) + 12;
+  const totalAIResponses = sessions.reduce((acc, curr) => acc + Math.floor((curr.messagesCount || 0) / 2), 0) + 12;
 
   const metrics = [
     {
@@ -123,7 +123,7 @@ export const Dashboard: React.FC = () => {
               <div className="flex items-center justify-between border-b border-slate-850 pb-2">
                 <span className="text-xs text-slate-455">Knowledge Index Size</span>
                 <span className="text-sm font-semibold text-slate-200 font-mono">
-                  {formatBytes(documents.reduce((acc, curr) => acc + curr.size, 0))}
+                  {formatBytes(documents.reduce((acc, curr) => acc + (curr.size || curr.fileSize || 0), 0))}
                 </span>
               </div>
               <div className="flex items-center justify-between border-b border-slate-850 pb-2">
@@ -173,7 +173,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 sessions.map((session) => (
-                  <div key={session.id} className="px-5 py-4 flex items-center justify-between hover:bg-slate-800/10 transition-colors">
+                  <div key={session.id || (session as any)._id} className="px-5 py-4 flex items-center justify-between hover:bg-slate-800/10 transition-colors font-sans">
                     <div className="min-w-0 flex-1 mr-3">
                       <Link to="/chat" className="text-sm font-semibold text-slate-200 hover:text-indigo-400 transition-colors truncate block">
                         {session.title}
@@ -206,15 +206,15 @@ export const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 documents.map((doc) => (
-                  <div key={doc.id} className="px-5 py-4 flex items-center justify-between hover:bg-slate-800/10 transition-colors">
-                    <div className="min-w-0 flex-1 mr-3">
-                      <p className="text-sm font-semibold text-slate-200 truncate mb-0.5" title={doc.name}>
-                        {doc.name}
+                  <div key={doc.id || (doc as any)._id} className="px-5 py-4 flex items-center justify-between hover:bg-slate-800/10 transition-colors">
+                    <div className="min-w-0 flex-1 mr-3 font-sans">
+                      <p className="text-sm font-semibold text-slate-200 truncate mb-0.5" title={doc.name || doc.originalName || ''}>
+                        {doc.name || doc.originalName || ''}
                       </p>
-                      <div className="flex gap-2 text-[10px] text-slate-500 font-medium">
-                        <span>{formatBytes(doc.size)}</span>
+                      <div className="flex gap-2 text-[10px] text-slate-550 font-medium">
+                        <span>{formatBytes(doc.size || doc.fileSize || 0)}</span>
                         <span>•</span>
-                        <span>{formatDate(doc.uploadedAt)}</span>
+                        <span>{formatDate(doc.uploadedAt || doc.uploadDate || '')}</span>
                       </div>
                     </div>
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold uppercase">
