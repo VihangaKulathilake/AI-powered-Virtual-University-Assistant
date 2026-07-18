@@ -1,35 +1,51 @@
 const chatRepository = require('../repositories/chatRepository');
-const aiService = require('./aiService');
+const messageRepository = require('../repositories/messageRepository');
 
 class ChatService {
   /**
-   * Fetch active chat sessions for user
+   * Fetch all active chat sessions
    */
-  async getSessions(userId) {
-    return chatRepository.findSessionsByUserId(userId);
+  async getChats() {
+    return chatRepository.findAll();
   }
 
   /**
-   * Create a new session for user
+   * Retrieve a specific chat session by ID
    */
-  async createSession(userId, title) {
-    return chatRepository.createSession({ userId, title });
+  async getChatById(id) {
+    const chat = await chatRepository.findById(id);
+    if (!chat) {
+      const error = new Error(`Chat session not found with ID: ${id}`);
+      error.statusCode = 404;
+      throw error;
+    }
+    return chat;
   }
 
   /**
-   * Process a message: save user query, generate AI response, save AI response
+   * Initialize a new chat session
    */
-  async processMessage(userId, sessionId, messageText) {
-    // 1. Fetch chat history context or attachments if needed
-    
-    // 2. Mock generating response
-    const botResponse = await aiService.generateResponse(messageText, []);
-    
-    // 3. Save messages using repository stubs
-    await chatRepository.addMessage(sessionId, { sender: 'user', content: messageText });
-    const botMessage = await chatRepository.addMessage(sessionId, { sender: 'assistant', content: botResponse });
+  async createChat(chatData) {
+    const title = chatData.title && chatData.title.trim() ? chatData.title.trim() : 'New Chat';
+    return chatRepository.create({ title });
+  }
 
-    return botMessage;
+  /**
+   * Delete a chat session and all messages associated with it
+   */
+  async deleteChat(id) {
+    const chat = await chatRepository.findById(id);
+    if (!chat) {
+      const error = new Error(`Chat session not found with ID: ${id}`);
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Cascade delete all message documents linked to this chat ID
+    await messageRepository.deleteByChatId(id);
+
+    // Remove the chat session itself
+    return chatRepository.delete(id);
   }
 }
 
