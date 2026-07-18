@@ -2,31 +2,37 @@ const Chat = require('../models/chatModel');
 
 class ChatRepository {
   /**
-   * Find all chat sessions sorted by last update date
+   * Find all chat sessions for a specific user, sorted by last update
+   * @param {string} userId Authenticated user's MongoDB _id
    */
-  async findAll() {
-    return Chat.find().sort({ updatedAt: -1 });
+  async findAll(userId) {
+    return Chat.find({ userId }).sort({ updatedAt: -1 });
   }
 
   /**
-   * Find a chat session by its unique ID
+   * Find a chat session by ID, scoped to a specific user
+   * @param {string} id Chat session _id
+   * @param {string} userId Authenticated user's MongoDB _id
    */
-  async findById(id) {
-    return Chat.findById(id);
+  async findById(id, userId) {
+    return Chat.findOne({ _id: id, userId });
   }
 
   /**
-   * Create a new chat session document
+   * Create a new chat session owned by a user
+   * @param {object} chatData Must include { title, userId }
    */
   async create(chatData) {
     return Chat.create(chatData);
   }
 
   /**
-   * Delete a chat session document
+   * Delete a chat session owned by a specific user
+   * @param {string} id Chat session _id
+   * @param {string} userId Authenticated user's MongoDB _id
    */
-  async delete(id) {
-    return Chat.findByIdAndDelete(id);
+  async delete(id, userId) {
+    return Chat.findOneAndDelete({ _id: id, userId });
   }
 }
 

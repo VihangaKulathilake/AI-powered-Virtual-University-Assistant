@@ -3,11 +3,11 @@ const messageService = require('../services/messageService');
 const { HTTP_STATUS } = require('../constants');
 
 /**
- * Get all chat sessions
+ * Get all chat sessions for the authenticated user
  */
 const getChats = async (req, res, next) => {
   try {
-    const chats = await chatService.getChats();
+    const chats = await chatService.getChats(req.user._id);
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: chats,
@@ -18,11 +18,11 @@ const getChats = async (req, res, next) => {
 };
 
 /**
- * Create a new chat session
+ * Create a new chat session for the authenticated user
  */
 const createChat = async (req, res, next) => {
   try {
-    const chat = await chatService.createChat(req.body);
+    const chat = await chatService.createChat(req.body, req.user._id);
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: chat,
@@ -33,11 +33,11 @@ const createChat = async (req, res, next) => {
 };
 
 /**
- * Get a specific chat session by ID
+ * Get a specific chat session by ID (user-scoped)
  */
 const getChatById = async (req, res, next) => {
   try {
-    const chat = await chatService.getChatById(req.params.id);
+    const chat = await chatService.getChatById(req.params.id, req.user._id);
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: chat,
@@ -48,11 +48,11 @@ const getChatById = async (req, res, next) => {
 };
 
 /**
- * Delete a specific chat session and its cascade messages
+ * Delete a specific chat session and its cascade messages (user-scoped)
  */
 const deleteChat = async (req, res, next) => {
   try {
-    await chatService.deleteChat(req.params.id);
+    await chatService.deleteChat(req.params.id, req.user._id);
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: null,

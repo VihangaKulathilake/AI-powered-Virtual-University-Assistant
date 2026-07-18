@@ -1,21 +1,30 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 interface ProtectedLayoutProps {
   redirectPath?: string;
 }
 
 export const ProtectedLayout: React.FC<ProtectedLayoutProps> = ({
-  redirectPath = '/',
+  redirectPath = '/login',
 }) => {
-  // Mock authentication check: check for auth_token in localStorage
-  const isAuthenticated = !!localStorage.getItem('auth_token') || true; // Set to true for initial template validation
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Wait until session is restored from localStorage before redirecting
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Navigate to={redirectPath} replace />;
   }
 
-  // Renders the child routes
   return <Outlet />;
 };
 

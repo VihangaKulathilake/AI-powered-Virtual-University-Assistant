@@ -4,8 +4,10 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
+const authRoutes = require('./routes/authRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const { protect } = require('./middleware/authMiddleware');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -31,7 +33,7 @@ app.use(express.urlencoded({ extended: true }));
 // Serve Uploads folder as static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Health Check API
+// Health Check API (public)
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -41,9 +43,12 @@ app.get('/api/health', (req, res) => {
 });
 
 // REST API Route mappings
-app.use('/api/chats', chatRoutes);
-// Note: Mount routes at /api/knowledge for upload matching REST specs
-app.use('/api/knowledge', uploadRoutes);
+// Auth routes — public (no JWT required)
+app.use('/api/auth', authRoutes);
+
+// Chat and Knowledge routes — protected (JWT required)
+app.use('/api/chats', protect, chatRoutes);
+app.use('/api/knowledge', protect, uploadRoutes);
 
 // Catch-all route for unmatched paths (404)
 app.use('*', (req, res, next) => {

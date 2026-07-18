@@ -26,10 +26,17 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Basic global API error handling placeholder
     if (error.response) {
       if (error.response.status === 413) {
         console.error('Payload too large.');
+      }
+      // On 401 Unauthorized, clear stale token and redirect to login
+      if (error.response.status === 401) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);

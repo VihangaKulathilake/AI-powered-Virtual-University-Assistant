@@ -1,29 +1,49 @@
+const authService = require('../services/authService');
+const User = require('../models/userModel');
+
 /**
- * Authorization middleware stub
- * Note: Authentication logic is mocked for initial setup
+ * JWT Authentication middleware.
+ * Reads the Authorization: Bearer <token> header, verifies the JWT,
+ * and attaches the decoded user to req.user.
  */
-const protect = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+const protect = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
 
-  // Let requests pass but validate if a token structure is provided
-  if (authHeader && authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      const err = new Error('Not authenticated. Please log in to access this resource.');
+      err.statusCode = 401;
+      return next(err);
+    }
+
     const token = authHeader.split(' ')[1];
-    // Attach dummy user object to request
-    req.user = {
-      id: 'mock-user-123',
-      name: 'John Doe',
-      role: 'student',
-    };
-    return next();
-  }
 
-  // Pass dummy user info anyway to ensure starter code functions
-  req.user = {
-    id: 'mock-user-123',
-    name: 'John Doe',
-    role: 'student',
-  };
-  next();
+    // Verify JWT signature and expiry
+    const decoded = authService.verifyToken(token);
+
+    // Attach user to request (exclude password)
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+      const err = new Error('The user associated with this token no longer exists.');
+      err.statusCode = 401;
+      return next(err);
+    }
+
+    req.user = currentUser;
+    next();
+  } catch (err) {
+    if (err.name === 'JsonWebTokenError') {
+      const error = new Error('Invalid authentication token. Please log in again.');
+      error.statusCode = 401;
+      return next(error);
+    }
+    if (err.name === 'TokenExpiredError') {
+      const error = new Error('Your session has expired. Please log in again.');
+      error.statusCode = 401;
+      return next(error);
+    }
+    next(err);
+  }
 };
 
 module.exports = { protect };

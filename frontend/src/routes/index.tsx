@@ -10,10 +10,16 @@ import Dashboard from '../pages/Dashboard/Dashboard';
 import Settings from '../pages/Settings/Settings';
 import NotFound from '../pages/NotFound/NotFound';
 import UploadPanel from '../components/upload/UploadPanel';
+import Login from '../pages/Auth/Login';
+import Register from '../pages/Auth/Register';
 
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
+      {/* Public Auth Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
       {/* Route wrapper inside Auth verification layer */}
       <Route element={<ProtectedLayout />}>
         {/* Main Application Layout Frame */}
